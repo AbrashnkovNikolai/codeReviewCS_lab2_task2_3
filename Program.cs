@@ -74,12 +74,12 @@ public class PasswordHolder : StringHolder
 public class PasswordInput
 {
     private string _password;
-    private int _maxLength;
+    private int _minLength; // Изменяем название переменной на _minLength
 
     // Конструктор
-    public PasswordInput(int maxLength)
+    public PasswordInput(int minLength) // Параметр теперь minLength
     {
-        _maxLength = maxLength;
+        _minLength = minLength;
         _password = "";
     }
 
@@ -88,7 +88,7 @@ public class PasswordInput
     {
         do
         {
-            Console.Write("Введите пароль (пароль имеет длинну {0} символов): ", _maxLength);
+            Console.Write("Задайте пароль (пароль должен содержать минимум {0} символов): ", _minLength);
             ConsoleKeyInfo key;
             _password = ""; // Сброс пароля перед новым вводом
             do
@@ -103,7 +103,7 @@ public class PasswordInput
                     Console.Write("\b \b");
                     _password = _password.Substring(0, _password.Length - 1);
                 }
-                else if (key.KeyChar >= ' ' && key.KeyChar <= '~' && _password.Length < _maxLength)
+                else if (key.KeyChar >= ' ' && key.KeyChar <= '~')
                 {
                     Console.Write("*");
                     _password += key.KeyChar;
@@ -112,11 +112,11 @@ public class PasswordInput
             Console.WriteLine();
 
             // Проверка длины пароля
-            if (_password.Length < _maxLength)
+            if (_password.Length < _minLength) // Изменяем условие на < _minLength
             {
-                Console.WriteLine($"Пароль должен содержать минимум {_maxLength} символов. Попробуйте еще раз.");
+                Console.WriteLine($"Пароль должен содержать минимум {_minLength} символов. Попробуйте еще раз.");
             }
-        } while (_password.Length < _maxLength); // Повторяем ввод, пока пароль недостаточно длинный
+        } while (_password.Length < _minLength); // Повторяем ввод, пока пароль недостаточно длинный
     }
 
     // Метод для получения введенного пароля
@@ -138,146 +138,114 @@ public class PasswordInput
     }
 }
 
+
 public class Time
 {
     private byte hours;
     private byte minutes;
 
-    // Конструктор
     public Time(byte hours, byte minutes)
     {
-        if (hours > 23 || minutes > 59)
-            throw new ArgumentOutOfRangeException("Некорректное время.");
-
         this.hours = hours;
         this.minutes = minutes;
+        NormalizeTime();
     }
 
-    // Свойства
-    public byte Hours
+    private void NormalizeTime()
     {
-        get { return hours; }
-        set
+        if (minutes >= 60)
         {
-            if (value > 23)
-                throw new ArgumentOutOfRangeException("Часы не могут быть больше 23.");
-            hours = value;
+            hours += (byte)(minutes / 60);
+            minutes %= 60;
         }
+        hours %= 24; // Часы должны быть в диапазоне от 0 до 23
     }
 
-    public byte Minutes
+    public static Time operator +(Time time, uint minutesToAdd)
     {
-        get { return minutes; }
-        set
-        {
-            if (value > 59)
-                throw new ArgumentOutOfRangeException("Минуты не могут быть больше 59.");
-            minutes = value;
-        }
-    }
-
-    // Унарные операции
-    public static Time operator ++(Time t)
-    {
-        return t.AddMinutes(1);
-    }
-
-    public static Time operator --(Time t)
-    {
-        t.minutes --;
-        if (t.minutes < 0)
-                { t.hours = (byte)(t.hours - 1); 
-            t.minutes = 59;
-
-        }
-        if (t.hours < 0)
-        {
-            t.hours = (byte)(t.hours - 1);
-            t.minutes = 59;
-
-        }
-        return new Time(t.hours,t.minutes) ; // Возвращаем на 1 минуту назад
-    }
-
-    // Операции приведения типа
-    public static explicit operator byte(Time t)
-    {
-        return t.hours; // Возвращаем только часы
-    }
-
-    public static implicit operator bool(Time t)
-    {
-        return t.hours != 0 || t.minutes != 0; // true, если не равно 00:00
-    }
-
-    // Бинарные операции
-    public static Time operator +(Time t, uint minutesToAdd)
-    {
-        return t.AddMinutes(minutesToAdd);
-    }
-
-    public static Time operator -(Time t, uint minutesToSubtract)
-    {
-        Time new_t = new Time(t.hours, t.minutes);
-        if (minutesToSubtract > 60)
-        {
-            byte new_hours = (byte)(new_t.hours - minutesToSubtract/60);
-        }
-        if (minutesToSubtract > t.minutes)
-        {
-            
-            new_t.hours = (byte) (t.hours - 1);
-            new_t.minutes  = (byte)((59 + (t.minutes - minutesToSubtract)  )%60);
-        }
-        return new_t;
-    }
-
-    public Time AddMinutes(uint minutesToAdd)
-    {
-        int totalMinutes = this.minutes + (int)minutesToAdd;
-        byte newHours = (byte)((this.hours + totalMinutes / 60) % 24);
+        uint totalMinutes = (uint)(time.minutes + minutesToAdd);
+        byte newHours = (byte)((time.hours + totalMinutes / 60) % 24);
         byte newMinutes = (byte)(totalMinutes % 60);
         return new Time(newHours, newMinutes);
     }
 
-    // Переопределение метода ToString()
+    public static Time operator -(Time time, uint minutesToSubtract)
+    {
+        // Общее количество минут, которое нужно вычесть
+        int totalMinutes = time.minutes - (int)minutesToSubtract;
+        // Определяем новые часы и минуты
+        byte newHours = time.hours;
+        byte newMinutes;
+
+        // Если totalMinutes отрицательные, корректируем часы и минуты
+        if (totalMinutes < 0)
+        {
+            // Вычисляем, сколько часов нужно вычесть
+            int hoursToSubtract = (int)Math.Ceiling((double)(-totalMinutes) / 60);
+            newHours = (byte)((newHours - hoursToSubtract + 24) % 24); // Корректируем часы
+            newMinutes = (byte)((totalMinutes + 60 * hoursToSubtract) % 60); // Корректируем минуты
+        }
+        else
+        {
+            newMinutes = (byte)totalMinutes; // Если totalMinutes не отрицательные
+        }
+
+        return new Time(newHours, newMinutes);
+    }
+    public static Time operator ++(Time time)
+    {
+        return time + 1; // Увеличиваем на 1 минуту
+    }
+
+    // Перегрузка оператора декремента
+    public static Time operator --(Time time)
+    {
+        return time - 1; // Уменьшаем на 1 минуту
+    }
+    public static implicit operator byte(Time time)
+    {
+        return time.hours;
+    }
+
+    public static implicit operator bool(Time time)
+    {
+        return time.hours != 0 || time.minutes != 0;
+    }
+
     public override string ToString()
     {
         return $"{hours:D2}:{minutes:D2}";
     }
 
-    // Метод для безопасного ввода данных
     public static byte GetValidByteInput(string prompt, byte maxValue)
     {
-        byte result;
+        byte value;
         while (true)
         {
             Console.Write(prompt);
-            string input = Console.ReadLine();
-            if (byte.TryParse(input, out result) && result <= maxValue)
+            if (byte.TryParse(Console.ReadLine(), out value) && value <= maxValue)
             {
-                return result;
+                return value;
             }
-            Console.WriteLine($"Ошибка: введите число от 0 до {maxValue}.");
+            Console.WriteLine($"Пожалуйста, введите число от 0 до {maxValue}.");
         }
     }
 
-    // Метод для безопасного ввода uint
     public static uint GetValidUIntInput(string prompt)
     {
-        uint result;
+        uint value;
         while (true)
         {
             Console.Write(prompt);
-            string input = Console.ReadLine();
-            if (uint.TryParse(input, out result))
+            if (uint.TryParse(Console.ReadLine(), out value))
             {
-                return result;
+                return value;
             }
-            Console.WriteLine("Ошибка: введите неотрицательное целое число.");
+            Console.WriteLine("Пожалуйста, введите неотрицательное число.");
         }
     }
 }
+
 
 // Класс для тестирования
 class Program
@@ -299,7 +267,6 @@ class Program
         {
             Console.WriteLine($"Маскированный пароль: {passwordInput.MaskPassword()}");
         }
-
         byte hours = Time.GetValidByteInput("Введите часы (0-23): ", 23);
         byte minutes = Time.GetValidByteInput("Введите минуты (0-59): ", 59);
 
@@ -311,14 +278,14 @@ class Program
         Console.WriteLine("Новое время после добавления: " + newTime);
 
         uint minutesToSubtract = Time.GetValidUIntInput("Введите количество минут для вычитания: ");
-        Time subtractedTime = time - minutesToSubtract; // Используем перегруженный оператор -
+        Time subtractedTime = newTime - minutesToSubtract; // Используем перегруженный оператор -
         Console.WriteLine("Новое время после вычитания: " + subtractedTime);
 
         // Тестирование унарных операторов
-        Time incrementedTime = ++time; // Используем перегруженный оператор ++
+        Time incrementedTime = ++subtractedTime; // Используем перегруженный оператор ++
         Console.WriteLine("Время после добавления одной минуты: " + incrementedTime);
 
-        Time decrementedTime = --time; // Используем перегруженный оператор --
+        Time decrementedTime = --incrementedTime; // Используем перегруженный оператор --
         Console.WriteLine("Время после вычитания одной минуты: " + decrementedTime);
 
         // Тестирование приведения типов
