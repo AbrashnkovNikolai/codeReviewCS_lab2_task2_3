@@ -1,24 +1,22 @@
 ﻿using System;
 
-// Базовый класс StringHolder.
 public class StringHolder
 {
-    // Защищенное поле для хранения строки.
+
     protected string _value;
 
-    // Конструктор для инициализации строки.
+
     public StringHolder(string value)
     {
         _value = value;
     }
 
-    // Конструктор копирования для создания копии объекта.
     public StringHolder(StringHolder other)
     {
         _value = other._value;
     }
 
-    // Метод для получения строки из первого и последнего символов.
+
     public string GetFirstAndLastChars()
     {
         if (_value.Length < 2)
@@ -38,34 +36,29 @@ public class StringHolder
 // Дочерний класс PasswordHolder.
 public class PasswordHolder : StringHolder
 {
-    // Член для хранения длины пароля.
     private int _length;
 
-    // Конструктор для инициализации пароля и длины.
     public PasswordHolder(string password, int length) : base(password)
     {
         _length = length;
     }
 
-    // Конструктор копирования 
     public PasswordHolder(PasswordHolder other) : base(other)
     {
         _length = other._length;
     }
 
-    // Метод для проверки длины пароля.
     public bool IsPasswordLongEnough()
     {
         return _value.Length >= _length;
     }
 
-    // Метод для маскировки пароля.
+    
     public string MaskPassword()
     {
         return new string('*', _value.Length);
     }
 
-    // Перегрузка метода ToString для вывода пароля и длины.
     public override string ToString()
     {
         return $"PasswordHolder: {_value} (length: {_length})";
@@ -81,7 +74,7 @@ public class PasswordInput
     
     private int _minLength;
 
-    // Конструктор для инициализации минимальной длины пароля.
+    
     public PasswordInput(int minLength)
     {
         _minLength = minLength;
@@ -143,7 +136,7 @@ public class PasswordInput
     }
 }
 
-// Класс времени 
+
 public class Time
 {
     
@@ -152,7 +145,7 @@ public class Time
     
     private byte minutes;
 
-    // Конструктор для инициализации часов и минут.
+    
     public Time(byte hours, byte minutes)
     {
         this.hours = hours;
@@ -168,10 +161,10 @@ public class Time
             hours += (byte)(minutes / 60);
             minutes %= 60;
         }
-        hours %= 24; // Часы должны быть в диапазоне от 0 до 23
+        hours %= 24; 
     }
 
-    // Перегрузка оператора сложения для добавления минут.
+    
     public static Time operator +(Time time, uint minutesToAdd)
     {
         uint totalMinutes = (uint)(time.minutes + minutesToAdd);
@@ -180,7 +173,7 @@ public class Time
         return new Time(newHours, newMinutes);
     }
 
-    // Перегрузка оператора вычитания для вычитания минут.
+
     public static Time operator -(Time time, uint minutesToSubtract)
     {
         int totalMinutes = time.minutes - (int)minutesToSubtract;
@@ -188,7 +181,7 @@ public class Time
         byte newHours = time.hours;
         byte newMinutes;
 
-        // Если totalMinutes отрицательные, корректируем часы и минуты
+        
         if (totalMinutes < 0)
         {
             int hoursToSubtract = (int)Math.Ceiling((double)(-totalMinutes) / 60);
@@ -197,22 +190,22 @@ public class Time
         }
         else
         {
-            newMinutes = (byte)totalMinutes; // Если totalMinutes не отрицательные
+            newMinutes = (byte)totalMinutes; 
         }
 
         return new Time(newHours, newMinutes);
     }
 
-    // Перегрузка оператора инкремента для добавления одной минуты.
+    
     public static Time operator ++(Time time)
     {
-        return time + 1; // Увеличиваем на 1 минуту
+        return time + 1; 
     }
 
-    // Перегрузка оператора декремента для вычитания одной минуты.
+    
     public static Time operator --(Time time)
     {
-        return time - 1; // Уменьшаем на 1 минуту
+        return time - 1; 
     }
 
     // Неявное приведение к типу byte для получения часов.
@@ -221,13 +214,13 @@ public class Time
         return time.hours;
     }
 
-    // Неявное приведение к типу bool для проверки времени.
+    
     public static implicit operator bool(Time time)
     {
         return time.hours != 0 || time.minutes != 0;
     }
 
-    // Перегрузка метода ToString для вывода времени.
+    
     public override string ToString()
     {
         return $"{hours:D2}:{minutes:D2}";
@@ -293,11 +286,11 @@ class Program
         Console.WriteLine("Текущее время: " + time);
 
         uint minutesToAdd = Time.GetValidUIntInput("Введите количество минут для добавления: ");
-        Time newTime = time + minutesToAdd; // Используем перегруженный оператор +
+        Time newTime = time + minutesToAdd; 
         Console.WriteLine("Новое время после добавления: " + newTime);
 
         uint minutesToSubtract = Time.GetValidUIntInput("Введите количество минут для вычитания: ");
-        Time subtractedTime = newTime - minutesToSubtract; // Используем перегруженный оператор -
+        Time subtractedTime = newTime - minutesToSubtract; 
         Console.WriteLine("Новое время после вычитания: " + subtractedTime);
 
         // Тестирование унарных операторов
